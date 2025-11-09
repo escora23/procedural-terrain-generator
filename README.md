@@ -2,8 +2,8 @@
 
 <div align="center">
 
-[![GitHub stars](https://img.shields.io/github/stars/janjaumebb/procedural-terrain-generator?style=for-the-badge&color=00ff88)](https://github.com/janjaumebb/procedural-terrain-generator/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/janjaumebb/procedural-terrain-generator?style=for-the-badge&color=00ff88)](https://github.com/janjaumebb/procedural-terrain-generator/network)
+[![GitHub stars](https://img.shields.io/github/stars/escora23/procedural-terrain-generator?style=for-the-badge&color=00ff88)](https://github.com/escora23/procedural-terrain-generator/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/escora23/procedural-terrain-generator?style=for-the-badge&color=00ff88)](https://github.com/escora23/procedural-terrain-generator/network)
 [![License](https://img.shields.io/badge/License-MIT-00ff88?style=for-the-badge)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-2.0-00ff88?style=for-the-badge)](CHANGELOG.md)
 
@@ -119,7 +119,7 @@ npx http-server
 
 ### Opción 3: GitHub Pages (Versión en Línea)
 ```
-https://username.github.io/procedural-terrain-generator/
+https://escora23.github.io/procedural-terrain-generator/muntanyes-3d.html
 ```
 
 ---
@@ -282,12 +282,15 @@ Este proyecto implementa varios conceptos avanzados:
 
 ## 🎥 Demo en Vivo
 
-**Próximamente en GitHub Pages** 📱
+**GitHub Pages:**
+```
+https://escora23.github.io/procedural-terrain-generator/muntanyes-3d.html
+```
 
 Para pruebas locales:
 ```bash
 # Descarga el repositorio
-git clone https://github.com/janjaumebb/procedural-terrain-generator.git
+git clone https://github.com/escora23/procedural-terrain-generator.git
 
 # Abre muntanyes-3d.html en tu navegador
 ```
@@ -422,7 +425,7 @@ Si te gusta este proyecto, ¡no olvides dejar una ⭐!
 
 ## 📞 Contacto
 
-- **GitHub**: [@janjaumebb](https://github.com/janjaumebb)
+- **GitHub**: [@escora23](https://github.com/escora23)
 - **Email**: janjaumebb@gmail.com
 - **LinkedIn**: [Jan Boncompte](https://linkedin.com/in/janboncompte)
 
