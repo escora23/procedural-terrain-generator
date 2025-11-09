@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de Muntanyes 3D - Procedural</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1a3e 100%);
+      color: #fff;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .ui-container {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: rgba(20, 20, 40, 0.95);
+      border: 2px solid #00ff88;
+      border-radius: 10px;
+      padding: 20px;
+      z-index: 1000;
+      max-width: 350px;
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+      backdrop-filter: blur(10px);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 15px;
+      text-shadow: 0 0 10px #00ff88;
+      color: #00ff88;
+    }
+
+    .control-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 5px;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .value-display {
+      display: inline-block;
+      margin-left: 10px;
+      color: #00ff88;
+      font-weight: bold;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      background: #333;
+      outline: none;
+      border-radius: 3px;
+      -webkit-appearance: none;
+      margin-top: 5px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #00ff88;
+      cursor: pointer;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #00ff88;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: #00ff88;
+      cursor: pointer;
+      border-radius: 50%;
+      border: none;
+      box-shadow: 0 0 10px #00ff88;
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      padding: 8px;
+      background: #222;
+      border: 1px solid #00ff88;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-top: 5px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    select {
+      color: #00ff88;
+    }
+
+    select option {
+      background: #222;
+      color: #fff;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      flex: 1;
+      min-width: 100px;
+      padding: 10px 15px;
+      background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+      border: none;
+      color: #000;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 25px rgba(0, 255, 136, 0.6);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .stats-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(20, 20, 40, 0.95);
+      border: 2px solid #ff00ff;
+      border-radius: 10px;
+      padding: 15px;
+      font-size: 11px;
+      z-index: 1000;
+      box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    .stat-line {
+      margin-bottom: 5px;
+      color: #aaa;
+    }
+
+    .stat-label {
+      color: #ff00ff;
+      font-weight: bold;
+    }
+
+    .rating-container {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #00ff88;
+    }
+
+    .rating {
+      display: flex;
+      gap: 5px;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .rating input {
+      display: none;
+    }
+
+    .rating label {
+      cursor: pointer;
+      color: #666;
+      transition: all 0.2s;
+      margin-bottom: 0;
+    }
+
+    .rating input:checked ~ label,
+    .rating label:hover,
+    .rating label:hover ~ label {
+      color: #ffd700;
+      text-shadow: 0 0 10px #ffd700;
+    }
+
+    #voice-output {
+      margin-top: 10px;
+      padding: 8px;
+      background: #222;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #00ff88;
+      min-height: 20px;
+    }
+
+    .loading-spinner {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2000;
+      font-size: 48px;
+      animation: spin 1s linear infinite;
+      text-shadow: 0 0 20px #00ff88;
+    }
+
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    .info-text {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      font-size: 12px;
+      color: #666;
+      z-index: 999;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #222;
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #00ff88;
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00cc6a;
+    }
+  </style>
+</head>
+<body>
+  <div class="ui-container">
+    <h1>🏔️ Muntanyes 3D</h1>
+    
+    <div class="control-group">
+      <label>Escala de Detall (Octaves) <span class="value-display" id="octaves-value">4</span></label>
+      <input type="range" id="octaves" min="1" max="8" value="4" step="1">
+    </div>
+
+    <div class="control-group">
+      <label>Lacunarity (Freqüència) <span class="value-display" id="lacunarity-value">2.5</span></label>
+      <input type="range" id="lacunarity" min="1.5" max="4" value="2.5" step="0.1">
+    </div>
+
+    <div class="control-group">
+      <label>Persistence (Amplitud) <span class="value-display" id="persistence-value">0.5</span></label>
+      <input type="range" id="persistence" min="0.1" max="1" value="0.5" step="0.05">
+    </div>
+
+    <div class="control-group">
+      <label>Escala General <span class="value-display" id="scale-value">30</span></label>
+      <input type="range" id="scale" min="1" max="100" value="30" step="1">
+    </div>
+
+    <div class="control-group">
+      <label>Altura Màxima <span class="value-display" id="max-height-value">20</span></label>
+      <input type="range" id="max-height" min="5" max="50" value="20" step="1">
+    </div>
+
+    <div class="control-group">
+      <label>Resolució (Segments) <span class="value-display" id="segments-value">50</span></label>
+      <input type="range" id="segments" min="10" max="100" value="50" step="5">
+    </div>
+
+    <div class="control-group">
+      <label>Tipus de Terrain</label>
+      <select id="terrain-type">
+        <option value="mountains">Muntanyes</option>
+        <option value="hills">Turons</option>
+        <option value="plateaus">Planures</option>
+        <option value="islands">Illes</option>
+        <option value="valleys">Valls</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label>Preferències</label>
+      <input type="text" id="mountain-input" placeholder="Ex: petites, grans, plana...">
+    </div>
+
+    <div class="button-group">
+      <button onclick="generateTerrain()">🔄 Generar</button>
+      <button onclick="resetCamera()">📷 Reset</button>
+      <button onclick="randomizeAll()">🎲 Aleatori</button>
+    </div>
+
+    <div class="control-group" style="margin-top: 15px;">
+      <button id="voiceButton" style="width: 100%;">🎤 Veu</button>
+      <div id="voice-output"></div>
+    </div>
+
+    <div class="rating-container">
+      <label style="margin-bottom: 10px; display: block;">Valoració</label>
+      <div class="rating">
+        <input type="radio" id="star5" name="rating" value="5">
+        <label for="star5" title="Excelent">⭐</label>
+        <input type="radio" id="star4" name="rating" value="4">
+        <label for="star4" title="Molt Bo">⭐</label>
+        <input type="radio" id="star3" name="rating" value="3">
+        <label for="star3" title="Bo">⭐</label>
+        <input type="radio" id="star2" name="rating" value="2">
+        <label for="star2" title="Regular">⭐</label>
+        <input type="radio" id="star1" name="rating" value="1">
+        <label for="star1" title="Dolent">⭐</label>
+      </div>
+      <button onclick="confirmRating()" style="width: 100%; margin-top: 10px;">✓ Confirmar</button>
+    </div>
+
+    <p style="margin-top: 15px; font-size: 10px; color: #666; text-align: center;">
+      Creat per Jan Boncompte i Elena Hermoso
+    </p>
+  </div>
+
+  <div class="stats-panel">
+    <div class="stat-line"><span class="stat-label">FPS:</span> <span id="fps">0</span></div>
+    <div class="stat-line"><span class="stat-label">Triangles:</span> <span id="triangles">0</span></div>
+    <div class="stat-line"><span class="stat-label">Geometries:</span> <span id="geometries">0</span></div>
+    <div class="stat-line"><span class="stat-label">Temps Gen:</span> <span id="gen-time">0ms</span></div>
+    <div class="stat-line"><span class="stat-label">Memòria:</span> <span id="memory">0MB</span></div>
+  </div>
+
+  <div class="loading-spinner" id="loading-spinner">⏳</div>
+  <div class="info-text">
+    🖱️ Arrossega per girar | 🔍 Scroll per zoom | 🎨 Ajusta paràmetres
+  </div>
+
+  <script>
+    // ============================================================================
+    // CLASSE: PERLIN NOISE MEJORADA
+    // ============================================================================
+    class ImprovedPerlinNoise {
+      constructor(seed = 0) {
+        this.seed = seed;
+        this.permutation = this.generatePermutation(seed);
+        this.p = [];
+        for (let i = 0; i < 256; i++) {
+          this.p[256 + i] = this.p[i] = this.permutation[i];
+        }
+      }
+
+      generatePermutation(seed) {
+        const permutation = [];
+        for (let i = 0; i < 256; i++) {
+          permutation[i] = i;
+        }
+        let random = this.seededRandom(seed);
+        for (let i = 255; i > 0; i--) {
+          const j = Math.floor(random() * (i + 1));
+          [permutation[i], permutation[j]] = [permutation[j], permutation[i]];
+        }
+        return permutation;
+      }
+
+      seededRandom(seed) {
+        return function() {
+          seed = (seed * 9301 + 49297) % 233280;
+          return seed / 233280;
+        };
+      }
+
+      smootherstep(t) {
+        return t * t * t * (t * (t * 6 - 15) + 10);
+      }
+
+      lerp(t, a, b) {
+        return a + t * (b - a);
+      }
+
+      grad(hash, x, y) {
+        const h = hash & 15;
+        const u = h < 8 ? x : y;
+        const v = h < 8 ? y : x;
+        return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
+      }
+
+      noise(x, y) {
+        const X = Math.floor(x) & 255;
+        const Y = Math.floor(y) & 255;
+
+        const fx = x - Math.floor(x);
+        const fy = y - Math.floor(y);
+
+        const u = this.smootherstep(fx);
+        const v = this.smootherstep(fy);
+
+        const a = this.p[X] + Y;
+        const aa = this.p[a];
+        const ab = this.p[a + 1];
+        const b = this.p[X + 1] + Y;
+        const ba = this.p[b];
+        const bb = this.p[b + 1];
+
+        const g1 = this.grad(aa, fx, fy);
+        const g2 = this.grad(ba, fx - 1, fy);
+        const g3 = this.grad(ab, fx, fy - 1);
+        const g4 = this.grad(bb, fx - 1, fy - 1);
+
+        const x1 = this.lerp(u, g1, g2);
+        const x2 = this.lerp(u, g3, g4);
+        const result = this.lerp(v, x1, x2);
+
+        return (result + 1) / 2;
+      }
+
+      fbm(x, y, octaves = 4, lacunarity = 2.0, persistence = 0.5) {
+        let amplitude = 1.0;
+        let frequency = 1.0;
+        let result = 0.0;
+        let maxValue = 0.0;
+
+        for (let i = 0; i < octaves; i++) {
+          result += this.noise(x * frequency, y * frequency) * amplitude;
+          maxValue += amplitude;
+          amplitude *= persistence;
+          frequency *= lacunarity;
+        }
+
+        return result / maxValue;
+      }
+
+      ridge(x, y, octaves = 4, lacunarity = 2.0, persistence = 0.5) {
+        let amplitude = 1.0;
+        let frequency = 1.0;
+        let result = 0.0;
+        let maxValue = 0.0;
+        let weight = 1.0;
+
+        for (let i = 0; i < octaves; i++) {
+          const n = 1.0 - Math.abs(this.noise(x * frequency, y * frequency) * 2.0 - 1.0);
+          result += (n * n) * weight * amplitude;
+          maxValue += amplitude;
+          weight = Math.min(n * 2.0, 1.0);
+          amplitude *= persistence;
+          frequency *= lacunarity;
+        }
+
+        return result / maxValue;
+      }
+
+      cellular(x, y, octaves = 4) {
+        let frequency = 1.0;
+        let result = 0.0;
+
+        for (let i = 0; i < octaves; i++) {
+          const gridX = Math.floor(x * frequency);
+          const gridY = Math.floor(y * frequency);
+          const fx = x * frequency - gridX;
+          const fy = y * frequency - gridY;
+
+          let minDist = Infinity;
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              const cellX = gridX + dx;
+              const cellY = gridY + dy;
+              const hash = this.hashFunction(cellX, cellY);
+              const rand = this.hashToRandom(hash);
+              const cellCenterX = cellX + rand;
+              const cellCenterY = cellY + this.hashToRandom(hash * 73856093);
+              const distX = fx - (cellCenterX - gridX);
+              const distY = fy - (cellCenterY - gridY);
+              const dist = Math.sqrt(distX * distX + distY * distY);
+              minDist = Math.min(minDist, dist);
+            }
+          }
+          result += minDist;
+          frequency *= 2.0;
+        }
+
+        return result / octaves;
+      }
+
+      hashFunction(x, y) {
+        let hash = this.p[(this.p[x & 255] + y) & 255];
+        return hash;
+      }
+
+      hashToRandom(hash) {
+        const x = Math.sin(hash) * 43758.5453;
+        return x - Math.floor(x);
+      }
+    }
+
+    // ============================================================================
+    // CLASSE: TERRAIN GENERATOR
+    // ============================================================================
+    class TerrainGenerator {
+      constructor(width = 256, height = 256) {
+        this.width = width;
+        this.height = height;
+        this.heightMap = [];
+        this.normalMap = [];
+      }
+
+      generateHeightMap(options = {}) {
+        const {
+          scale = 30,
+          octaves = 4,
+          lacunarity = 2.5,
+          persistence = 0.5,
+          maxHeight = 20,
+          terrainType = 'mountains',
+          seed = Math.random() * 10000
+        } = options;
+
+        const perlin = new ImprovedPerlinNoise(Math.floor(seed));
+        this.heightMap = [];
+
+        let minHeight = Infinity;
+        let maxHeightActual = -Infinity;
+
+        for (let y = 0; y < this.height; y++) {
+          this.heightMap[y] = [];
+          for (let x = 0; x < this.width; x++) {
+            let height = 0;
+            const nx = x / scale;
+            const ny = y / scale;
+
+            switch (terrainType) {
+              case 'mountains':
+                height = perlin.ridge(nx, ny, octaves, lacunarity, persistence);
+                height = Math.pow(height, 0.8);
+                break;
+              case 'hills':
+                height = perlin.fbm(nx, ny, octaves - 1, lacunarity, persistence);
+                height = height * 0.8;
+                break;
+              case 'plateaus':
+                height = perlin.fbm(nx, ny, octaves, lacunarity, persistence);
+                height = height > 0.5 ? 1 : 0.2;
+                break;
+              case 'islands':
+                height = perlin.fbm(nx, ny, octaves, lacunarity, persistence);
+                const distFromCenter = Math.sqrt(
+                  Math.pow((x - this.width / 2) / this.width, 2) +
+                  Math.pow((y - this.height / 2) / this.height, 2)
+                );
+                height *= Math.max(0, 1 - distFromCenter * 2);
+                break;
+              case 'valleys':
+                height = 1 - perlin.fbm(nx, ny, octaves, lacunarity, persistence);
+                height = Math.pow(height, 1.2);
+                break;
+              default:
+                height = perlin.fbm(nx, ny, octaves, lacunarity, persistence);
+            }
+
+            this.heightMap[y][x] = height;
+            minHeight = Math.min(minHeight, height);
+            maxHeightActual = Math.max(maxHeightActual, height);
+          }
+        }
+
+        for (let y = 0; y < this.height; y++) {
+          for (let x = 0; x < this.width; x++) {
+            const normalized = (this.heightMap[y][x] - minHeight) / (maxHeightActual - minHeight);
+            this.heightMap[y][x] = normalized * maxHeight;
+          }
+        }
+
+        return this.heightMap;
+      }
+
+      smoothHeightMap(iterations = 2) {
+        for (let iter = 0; iter < iterations; iter++) {
+          const smoothed = Array(this.height).fill(0).map(() => Array(this.width).fill(0));
+
+          for (let y = 1; y < this.height - 1; y++) {
+            for (let x = 1; x < this.width - 1; x++) {
+              const neighbors = [
+                this.heightMap[y - 1][x - 1],
+                this.heightMap[y - 1][x],
+                this.heightMap[y - 1][x + 1],
+                this.heightMap[y][x - 1],
+                this.heightMap[y][x],
+                this.heightMap[y][x + 1],
+                this.heightMap[y + 1][x - 1],
+                this.heightMap[y + 1][x],
+                this.heightMap[y + 1][x + 1]
+              ];
+              smoothed[y][x] = neighbors.reduce((a, b) => a + b) / 9;
+            }
+          }
+
+          this.heightMap = smoothed;
+        }
+      }
+    }
+
+    // ============================================================================
+    // CLASSE: 3D RENDERER
+    // ============================================================================
+    class TerrainRenderer {
+      constructor() {
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.terrainMesh = null;
+        this.waterMesh = null;
+        this.stats = {
+          triangles: 0,
+          geometries: 0,
+          fps: 0,
+          lastTime: Date.now(),
+          frameCount: 0
+        };
+
+        this.init();
+        this.setupControls();
+        this.animate();
+      }
+
+      init() {
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x050a15);
+        this.scene.fog = new THREE.Fog(0x050a15, 300, 1000);
+
+        this.camera = new THREE.PerspectiveCamera(
+          75,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          2000
+        );
+        this.camera.position.set(0, 40, 60);
+
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, precision: 'highp' });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+        document.body.appendChild(this.renderer.domElement);
+
+        this.setupLighting();
+
+        window.addEventListener('resize', () => this.onWindowResize());
+      }
+
+      setupLighting() {
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        this.scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        sunLight.position.set(50, 100, 50);
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 500;
+        sunLight.shadow.camera.left = -200;
+        sunLight.shadow.camera.right = 200;
+        sunLight.shadow.camera.top = 200;
+        sunLight.shadow.camera.bottom = -200;
+        sunLight.castShadow = true;
+        this.scene.add(sunLight);
+
+        const pointLight = new THREE.PointLight(0x00ff88, 0.4);
+        pointLight.position.set(0, 50, 0);
+        this.scene.add(pointLight);
+      }
+
+      setupControls() {
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+
+        this.renderer.domElement.addEventListener('mousedown', (e) => {
+          isDragging = true;
+          previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        this.renderer.domElement.addEventListener('mousemove', (e) => {
+          if (isDragging) {
+            const deltaX = e.clientX - previousMousePosition.x;
+            const deltaY = e.clientY - previousMousePosition.y;
+
+            this.camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), deltaX * 0.01);
+            this.camera.position.applyAxisAngle(new THREE.Vector3(1, 0, 0), deltaY * 0.01);
+            this.camera.lookAt(this.scene.position);
+
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+          }
+        });
+
+        this.renderer.domElement.addEventListener('mouseup', () => {
+          isDragging = false;
+        });
+
+        this.renderer.domElement.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const zoomSpeed = 2;
+          const direction = this.camera.position.clone().normalize();
+          const currentDistance = this.camera.position.length();
+          const newDistance = Math.max(10, Math.min(300, currentDistance + (e.deltaY > 0 ? zoomSpeed : -zoomSpeed)));
+          this.camera.position.copy(direction.multiplyScalar(newDistance));
+          this.camera.lookAt(this.scene.position);
+        });
+      }
+
+      createTerrainMesh(heightMap, options = {}) {
+        const {
+          scale = 100,
+          waterLevel = 3
+        } = options;
+
+        if (this.terrainMesh) {
+          this.scene.remove(this.terrainMesh);
+        }
+
+        const segmentsX = heightMap[0].length - 1;
+        const segmentsY = heightMap.length - 1;
+
+        const geometry = new THREE.BufferGeometry();
+        const vertices = [];
+        const colors = [];
+        const indices = [];
+
+        for (let y = 0; y < heightMap.length; y++) {
+          for (let x = 0; x < heightMap[0].length; x++) {
+            const height = heightMap[y][x];
+
+            vertices.push(
+              (x - heightMap[0].length / 2) * (scale / heightMap[0].length),
+              height,
+              (y - heightMap.length / 2) * (scale / heightMap.length)
+            );
+
+            const color = this.getHeightColor(height, waterLevel);
+            colors.push(color.r, color.g, color.b);
+          }
+        }
+
+        for (let y = 0; y < segmentsY; y++) {
+          for (let x = 0; x < segmentsX; x++) {
+            const a = y * (segmentsX + 1) + x;
+            const b = a + segmentsX + 1;
+
+            indices.push(a, b, a + 1);
+            indices.push(a + 1, b, b + 1);
+          }
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+        geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(indices), 1));
+        geometry.computeVertexNormals();
+
+        const material = new THREE.MeshPhongMaterial({
+          vertexColors: true,
+          flatShading: false,
+          side: THREE.DoubleSide,
+          shininess: 0
+        });
+
+        this.terrainMesh = new THREE.Mesh(geometry, material);
+        this.terrainMesh.castShadow = true;
+        this.terrainMesh.receiveShadow = true;
+
+        this.scene.add(this.terrainMesh);
+
+        this.stats.geometries = 1;
+        this.stats.triangles = indices.length / 3;
+
+        return this.terrainMesh;
+      }
+
+      createWaterMesh(waterLevel, scale = 100, resolution = 100) {
+        if (this.waterMesh) {
+          this.scene.remove(this.waterMesh);
+        }
+
+        const geometry = new THREE.PlaneGeometry(scale * 2, scale * 2, resolution, resolution);
+        geometry.rotateX(-Math.PI / 2);
+        geometry.translate(0, waterLevel - 0.1, 0);
+
+        const material = new THREE.MeshStandardMaterial({
+          color: 0x1a4d6d,
+          metalness: 0.7,
+          roughness: 0.2,
+          opacity: 0.7,
+          transparent: true
+        });
+
+        this.waterMesh = new THREE.Mesh(geometry, material);
+        this.waterMesh.receiveShadow = true;
+
+        this.scene.add(this.waterMesh);
+      }
+
+      getHeightColor(height, waterLevel) {
+        const color = new THREE.Color();
+
+        if (height < waterLevel) {
+          color.lerpColors(new THREE.Color(0x0a2f4d), new THREE.Color(0x1a6ba8), (height / waterLevel) * 0.5);
+        } else if (height < waterLevel + 2) {
+          color.lerpColors(new THREE.Color(0xd4a574), new THREE.Color(0xb8956a), 0.5);
+        } else if (height < waterLevel + 8) {
+          color.lerpColors(new THREE.Color(0x2d5016), new THREE.Color(0x4a7c3c), (height - waterLevel - 2) / 6);
+        } else if (height < waterLevel + 15) {
+          color.lerpColors(new THREE.Color(0x5a5a5a), new THREE.Color(0x3d3d3d), (height - waterLevel - 8) / 7);
+        } else {
+          color.lerpColors(new THREE.Color(0xb0b0b0), new THREE.Color(0xffffff), Math.min(1, (height - waterLevel - 15) / 10));
+        }
+
+        return color;
+      }
+
+      onWindowResize() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
+
+        this.renderer.setSize(width, height);
+      }
+
+      updateStats() {
+        this.stats.frameCount++;
+        const now = Date.now();
+        const deltaTime = now - this.stats.lastTime;
+
+        if (deltaTime >= 1000) {
+          this.stats.fps = this.stats.frameCount;
+          this.stats.frameCount = 0;
+          this.stats.lastTime = now;
+
+          document.getElementById('fps').textContent = this.stats.fps;
+          document.getElementById('triangles').textContent = this.stats.triangles.toLocaleString();
+          document.getElementById('geometries').textContent = this.stats.geometries;
+
+          if (performance.memory) {
+            const mb = (performance.memory.usedJSHeapSize / 1048576).toFixed(1);
+            document.getElementById('memory').textContent = mb + 'MB';
+          }
+        }
+      }
+
+      animate() {
+        requestAnimationFrame(() => this.animate());
+
+        this.updateStats();
+        this.renderer.render(this.scene, this.camera);
+      }
+
+      resetCamera() {
+        this.camera.position.set(0, 40, 60);
+        this.camera.lookAt(this.scene.position);
+      }
+    }
+
+    // ============================================================================
+    // INTERFACE I CONTROL PRINCIPAL
+    // ============================================================================
+    let renderer = null;
+    let terrainGenerator = null;
+
+    function initApp() {
+      renderer = new TerrainRenderer();
+      terrainGenerator = new TerrainGenerator(256, 256);
+
+      document.getElementById('octaves').addEventListener('input', (e) => {
+        document.getElementById('octaves-value').textContent = e.target.value;
+      });
+
+      document.getElementById('lacunarity').addEventListener('input', (e) => {
+        document.getElementById('lacunarity-value').textContent = e.target.value;
+      });
+
+      document.getElementById('persistence').addEventListener('input', (e) => {
+        document.getElementById('persistence-value').textContent = e.target.value;
+      });
+
+      document.getElementById('scale').addEventListener('input', (e) => {
+        document.getElementById('scale-value').textContent = e.target.value;
+      });
+
+      document.getElementById('max-height').addEventListener('input', (e) => {
+        document.getElementById('max-height-value').textContent = e.target.value;
+      });
+
+      document.getElementById('segments').addEventListener('input', (e) => {
+        document.getElementById('segments-value').textContent = e.target.value;
+      });
+
+      setupVoiceRecognition();
+      generateTerrain();
+    }
+
+    function getOptions() {
+      return {
+        scale: parseFloat(document.getElementById('scale').value),
+        octaves: parseInt(document.getElementById('octaves').value),
+        lacunarity: parseFloat(document.getElementById('lacunarity').value),
+        persistence: parseFloat(document.getElementById('persistence').value),
+        maxHeight: parseFloat(document.getElementById('max-height').value),
+        terrainType: document.getElementById('terrain-type').value,
+        seed: Math.random() * 10000
+      };
+    }
+
+    async function generateTerrain() {
+      const startTime = Date.now();
+      document.getElementById('loading-spinner').style.display = 'block';
+
+      try {
+        const options = getOptions();
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        const heightMap = terrainGenerator.generateHeightMap(options);
+        terrainGenerator.smoothHeightMap(1);
+
+        renderer.createTerrainMesh(heightMap, {
+          scale: options.scale * 2,
+          waterLevel: options.maxHeight * 0.3
+        });
+
+        renderer.createWaterMesh(options.maxHeight * 0.3, options.scale * 2);
+
+        const genTime = Date.now() - startTime;
+        document.getElementById('gen-time').textContent = genTime + 'ms';
+      } catch (error) {
+        console.error('Error generant terrain:', error);
+        alert('Error en generar el terrain: ' + error.message);
+      } finally {
+        document.getElementById('loading-spinner').style.display = 'none';
+      }
+    }
+
+    function resetCamera() {
+      renderer.resetCamera();
+    }
+
+    function randomizeAll() {
+      document.getElementById('octaves').value = Math.floor(Math.random() * 7) + 1;
+      document.getElementById('lacunarity').value = (Math.random() * 2.5 + 1.5).toFixed(1);
+      document.getElementById('persistence').value = (Math.random() * 0.9 + 0.1).toFixed(2);
+      document.getElementById('scale').value = Math.floor(Math.random() * 80) + 10;
+      document.getElementById('max-height').value = Math.floor(Math.random() * 40) + 5;
+      document.getElementById('terrain-type').value = ['mountains', 'hills', 'plateaus', 'islands', 'valleys'][Math.floor(Math.random() * 5)];
+
+      document.getElementById('octaves-value').textContent = document.getElementById('octaves').value;
+      document.getElementById('lacunarity-value').textContent = document.getElementById('lacunarity').value;
+      document.getElementById('persistence-value').textContent = document.getElementById('persistence').value;
+      document.getElementById('scale-value').textContent = document.getElementById('scale').value;
+      document.getElementById('max-height-value').textContent = document.getElementById('max-height').value;
+
+      generateTerrain();
+    }
+
+    function setupVoiceRecognition() {
+      const voiceButton = document.getElementById('voiceButton');
+      const voiceOutput = document.getElementById('voice-output');
+
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'ca-ES';
+
+      voiceButton.addEventListener('click', () => {
+        voiceOutput.textContent = 'Escoltant...';
+        recognition.start();
+      });
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
+        voiceOutput.textContent = `Has dit: ${transcript}`;
+        processVoiceCommand(transcript);
+      };
+
+      recognition.onerror = (event) => {
+        voiceOutput.textContent = `Error: ${event.error}`;
+      };
+
+      recognition.onend = () => {
+        if (voiceOutput.textContent.includes('Escoltant')) {
+          voiceOutput.textContent = 'Cap entrada de veu detectada';
+        }
+      };
+    }
+
+    function processVoiceCommand(transcript) {
+      if (transcript.includes('generar')) {
+        generateTerrain();
+      } else if (transcript.includes('petites') || transcript.includes('petita')) {
+        document.getElementById('max-height').value = 10;
+        document.getElementById('max-height-value').textContent = '10';
+        generateTerrain();
+      } else if (transcript.includes('grans') || transcript.includes('gran')) {
+        document.getElementById('max-height').value = 40;
+        document.getElementById('max-height-value').textContent = '40';
+        generateTerrain();
+      } else if (transcript.includes('aleatori')) {
+        randomizeAll();
+      } else if (transcript.includes('reset')) {
+        resetCamera();
+      }
+    }
+
+    function confirmRating() {
+      let rating = 0;
+      const ratingElements = document.getElementsByName('rating');
+      
+      for (let element of ratingElements) {
+        if (element.checked) {
+          rating = parseInt(element.value);
+          break;
+        }
+      }
+
+      if (rating >= 4) {
+        alert('✓ Gràcies per la valoració! El terrain et satisfà.');
+      } else if (rating > 0) {
+        alert('Valoració registrada. Podríem millorar?');
+      } else {
+        alert('Si us plau, selecciona una valoració.');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
